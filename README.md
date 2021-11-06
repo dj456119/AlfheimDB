@@ -1,2 +1,2 @@
 # AlfheimDB
-A linearizability distributed database by raft and wisckkey.
+A linearizability distributed database by raft and wisckey.
