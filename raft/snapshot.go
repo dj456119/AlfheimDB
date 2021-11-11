@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-11 12:15:28
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-11 21:36:34
+ * @LastEditTime: 2021-11-11 23:38:02
  */
 package raft
 
@@ -13,7 +13,6 @@ import (
 )
 
 type AlfheimRaftSnapshot struct {
-	dataBytes []byte
 }
 
 func (s *AlfheimRaftSnapshot) Persist(sink raft.SnapshotSink) error {

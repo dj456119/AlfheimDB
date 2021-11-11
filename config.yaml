@@ -1,1 +1,4 @@
 loglevel: debug
+raftdir: data/
+raftid: id1
+raftaddr: localhost:50011

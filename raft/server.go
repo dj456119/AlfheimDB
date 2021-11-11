@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-11 18:00:19
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-11 22:25:04
+ * @LastEditTime: 2021-11-12 00:06:07
  */
 
 package raft
@@ -32,14 +32,19 @@ type AlfheimRaftServer struct {
 	MyPort  string
 	RaftDir string
 	RaftFsm raft.FSM
+	Raft    *raft.Raft
 }
+
+var RaftServer *AlfheimRaftServer
 
 func Init() {
+	logrus.Info("init raft server ")
+	initRaft(config.Config.RaftAddr, config.Config.RaftDir, config.Config.RaftId)
 
 }
 
-func New(address string, raftDir string, raftId string) *AlfheimRaftServer {
-	RaftServer := new(AlfheimRaftServer)
+func initRaft(address string, raftDir string, raftId string) {
+	RaftServer = new(AlfheimRaftServer)
 	ip, port, err := net.SplitHostPort(config.Config.RaftAddr)
 	if err != nil {
 		logrus.Fatal("Unknow ip and port", config.Config.RaftAddr)
@@ -78,26 +83,27 @@ func New(address string, raftDir string, raftId string) *AlfheimRaftServer {
 	if err != nil {
 		logrus.Fatal("Init raft instance error", err)
 	}
-	cfg := raft.Configuration{
-		Servers: []raft.Server{
-			{
-				Suffrage: raft.Voter,
-				ID:       raft.ServerID(raftId),
-				Address:  raft.ServerAddress(address),
-			},
-		},
-	}
-	raftFuture := raftIns.BootstrapCluster(cfg)
-	if err := raftFuture.Error(); err != nil {
-		logrus.Fatal("Bootstrap raft cluster error")
-	}
+	RaftServer.Raft = raftIns
+	// cfg := raft.Configuration{
+	// 	Servers: []raft.Server{
+	// 		{
+	// 			Suffrage: raft.Voter,
+	// 			ID:       raft.ServerID(raftId),
+	// 			Address:  raft.ServerAddress(address),
+	// 		},
+	// 	},
+	// }
+	// raftFuture := raftIns.BootstrapCluster(cfg)
+	// if err := raftFuture.Error(); err != nil {
+	// 	logrus.Fatal("Bootstrap raft cluster error", err)
+	// }
 	grpcServer := grpc.NewServer()
 	tm.Register(grpcServer)
 	leaderhealth.Setup(raftIns, grpcServer, []string{"Example"})
 	raftadmin.Register(grpcServer, raftIns)
 	reflection.Register(grpcServer)
+	logrus.Info("raft init success")
 	if err := grpcServer.Serve(sock); err != nil {
 		logrus.Fatal("Grpc serve sock error, ", err)
 	}
-	return RaftServer
 }
