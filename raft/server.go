@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-11 18:00:19
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-11 21:38:32
+ * @LastEditTime: 2021-11-11 22:25:04
  */
 
 package raft
@@ -18,9 +18,13 @@ import (
 	"github.com/hashicorp/raft"
 	boltdb "github.com/hashicorp/raft-boltdb"
 	"github.com/sirupsen/logrus"
-)
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 
-var RaftServer *AlfheimRaftServer
+	"github.com/Jille/raft-grpc-leader-rpc/leaderhealth"
+	transport "github.com/Jille/raft-grpc-transport"
+	"github.com/Jille/raftadmin"
+)
 
 type AlfheimRaftServer struct {
 	RaftId  string
@@ -35,7 +39,7 @@ func Init() {
 }
 
 func New(address string, raftDir string, raftId string) *AlfheimRaftServer {
-	RaftServer = new(AlfheimRaftServer)
+	RaftServer := new(AlfheimRaftServer)
 	ip, port, err := net.SplitHostPort(config.Config.RaftAddr)
 	if err != nil {
 		logrus.Fatal("Unknow ip and port", config.Config.RaftAddr)
@@ -67,7 +71,10 @@ func New(address string, raftDir string, raftId string) *AlfheimRaftServer {
 
 	fsm := AlfheimRaftFSMImpl{}
 	RaftServer.RaftFsm = &fsm
-	raftIns, err := raft.NewRaft(raftConfig, &fsm, ldb, sdb, fss, nil)
+
+	tm := transport.New(raft.ServerAddress(address), []grpc.DialOption{grpc.WithInsecure()})
+
+	raftIns, err := raft.NewRaft(raftConfig, &fsm, ldb, sdb, fss, tm.Transport())
 	if err != nil {
 		logrus.Fatal("Init raft instance error", err)
 	}
@@ -84,5 +91,13 @@ func New(address string, raftDir string, raftId string) *AlfheimRaftServer {
 	if err := raftFuture.Error(); err != nil {
 		logrus.Fatal("Bootstrap raft cluster error")
 	}
-
+	grpcServer := grpc.NewServer()
+	tm.Register(grpcServer)
+	leaderhealth.Setup(raftIns, grpcServer, []string{"Example"})
+	raftadmin.Register(grpcServer, raftIns)
+	reflection.Register(grpcServer)
+	if err := grpcServer.Serve(sock); err != nil {
+		logrus.Fatal("Grpc serve sock error, ", err)
+	}
+	return RaftServer
 }
