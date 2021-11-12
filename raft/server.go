@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-11 18:00:19
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-12 22:44:47
+ * @LastEditTime: 2021-11-13 03:06:13
  */
 
 package raft
@@ -15,17 +15,12 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/AlfheimDB/config"
 	"github.com/hashicorp/raft"
 	boltdb "github.com/hashicorp/raft-boltdb"
 	"github.com/sirupsen/logrus"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
-
-	"github.com/Jille/raft-grpc-leader-rpc/leaderhealth"
-	transport "github.com/Jille/raft-grpc-transport"
-	"github.com/Jille/raftadmin"
 )
 
 type AlfheimRaftServer struct {
@@ -33,7 +28,7 @@ type AlfheimRaftServer struct {
 	MyIP        string
 	MyPort      string
 	RaftDir     string
-	RaftFsm     raft.FSM
+	RaftFsm     raft.BatchingFSM
 	Raft        *raft.Raft
 	RaftCluster []string
 }
@@ -58,15 +53,17 @@ func initRaft(address string, raftDir string, raftId string) {
 	RaftServer.MyPort = port
 	RaftServer.RaftId = raftId
 	RaftServer.RaftDir = raftDir
-	sock, err := net.Listen("tcp", config.Config.RaftAddr)
-	if err != nil {
-		logrus.Fatal("Listen port error", err)
-	}
+	// sock, err := net.Listen("tcp", config.Config.RaftAddr)
+	// if err != nil {
+	// 	logrus.Fatal("Listen port error", err)
+	// }
 
 	raftConfig := raft.DefaultConfig()
 	raftConfig.LocalID = raft.ServerID(raftId)
-
+	raftConfig.BatchApplyCh = true
+	raftConfig.MaxAppendEntries = 1000
 	baseDir := filepath.Join(raftDir, raftId)
+	//ldb := raft.NewInmemStore()
 	ldb, err := boltdb.NewBoltStore(filepath.Join(baseDir, "logs.dat"))
 	if err != nil {
 		logrus.Fatal("Init log db error", err)
@@ -83,23 +80,32 @@ func initRaft(address string, raftDir string, raftId string) {
 	fsm := AlfheimRaftFSMImpl{Counter: 0, RWLock: new(sync.RWMutex)}
 	RaftServer.RaftFsm = &fsm
 
-	tm := transport.New(raft.ServerAddress(address), []grpc.DialOption{grpc.WithInsecure()})
+	//tm := transport.New(raft.ServerAddress(address), []grpc.DialOption{grpc.WithInsecure()})
 
-	raftIns, err := raft.NewRaft(raftConfig, &fsm, ldb, sdb, fss, tm.Transport())
+	addr, err := net.ResolveTCPAddr("tcp", config.Config.RaftAddr)
+	if err != nil {
+		logrus.Fatal("Raft addr resolve error", err)
+	}
+	transport, err := raft.NewTCPTransport(config.Config.RaftAddr, addr, 2, 5*time.Second, os.Stderr)
+	if err != nil {
+		logrus.Fatal("Raft addr create error", err)
+	}
+
+	raftIns, err := raft.NewRaft(raftConfig, &fsm, ldb, sdb, fss, transport)
 	if err != nil {
 		logrus.Fatal("Init raft instance error", err)
 	}
 	RaftServer.Raft = raftIns
 	RaftServer.Bootstrap()
-	grpcServer := grpc.NewServer()
-	tm.Register(grpcServer)
-	leaderhealth.Setup(raftIns, grpcServer, []string{"Example"})
-	raftadmin.Register(grpcServer, raftIns)
-	reflection.Register(grpcServer)
-	logrus.Info("raft init success")
-	if err := grpcServer.Serve(sock); err != nil {
-		logrus.Fatal("Grpc serve sock error, ", err)
-	}
+	// grpcServer := grpc.NewServer()
+	// tm.Register(grpcServer)
+	// leaderhealth.Setup(raftIns, grpcServer, []string{"Example"})
+	// raftadmin.Register(grpcServer, raftIns)
+	// reflection.Register(grpcServer)
+	// logrus.Info("raft init success")
+	// if err := grpcServer.Serve(sock); err != nil {
+	// 	logrus.Fatal("Grpc serve sock error, ", err)
+	// }
 }
 
 func (aServer *AlfheimRaftServer) Bootstrap() {

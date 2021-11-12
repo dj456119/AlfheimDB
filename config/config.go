@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-10-16 17:50:03
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-12 22:16:12
+ * @LastEditTime: 2021-11-13 01:23:37
  */
 package config
 
@@ -23,6 +23,7 @@ type GTConfig struct {
 	RaftAddr       string `default:"localhost:50011"`
 	HttpServerAddr string `default:"localhost:12345"`
 	RaftCluster    []string
+	RespServerAddr string
 }
 
 var Config GTConfig
@@ -33,6 +34,7 @@ func Init() {
 	raftId := flag.String("raft_id", Config.RaftId, "Node id used by Raft")
 	raftCluster := flag.String("raft_cluster", "", "Raft cluster list")
 	httpserverAddr := flag.String("httpserver_addr", Config.HttpServerAddr, "Http test server addr")
+	respserverAddr := flag.String("respserver_addr", Config.RespServerAddr, "Resp server addr")
 	flag.Parse()
 	if *raftCluster == "" {
 		logrus.Fatal("Raft cluster is empty!")
@@ -41,5 +43,11 @@ func Init() {
 	Config.RaftAddr = *myAddr
 	Config.RaftId = *raftId
 	Config.HttpServerAddr = *httpserverAddr
+
+	if *respserverAddr == "" {
+		logrus.Fatal("Resp server addr is empty!")
+	}
+
+	Config.RespServerAddr = *respserverAddr
 	logrus.Info("Init config ok, ", Config)
 }

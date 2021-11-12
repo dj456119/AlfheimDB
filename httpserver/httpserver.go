@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-11 23:33:20
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-12 13:31:59
+ * @LastEditTime: 2021-11-13 02:12:01
  */
 package httpserver
 
@@ -19,9 +19,13 @@ import (
 )
 
 func HelloServer(w http.ResponseWriter, req *http.Request) {
-	logrus.Debug(raft.RaftServer)
-	logrus.Debug(raft.RaftServer.Raft)
-	raft.RaftServer.Raft.Apply([]byte("heelo"), 10*time.Second)
+	future := raft.RaftServer.Raft.Apply([]byte("heelo"), 10*time.Second)
+	err := future.Error()
+	if err != nil {
+		w.Write([]byte(err.Error()))
+	} else {
+		w.Write([]byte(future.Response().(string)))
+	}
 }
 
 func Init() {

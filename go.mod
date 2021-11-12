@@ -13,6 +13,7 @@ require (
 	github.com/lestrrat-go/strftime v1.0.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sirupsen/logrus v1.8.1
+	github.com/tidwall/redcon v1.4.2 // indirect
 	google.golang.org/grpc v1.42.0
 	k8s.io/client-go v0.22.3
 )

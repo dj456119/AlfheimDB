@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-11 11:19:46
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-12 22:41:25
+ * @LastEditTime: 2021-11-13 02:32:04
  */
 
 package raft
@@ -24,11 +24,27 @@ type AlfheimRaftFSMImpl struct {
 }
 
 func (aFsm *AlfheimRaftFSMImpl) Apply(l *raft.Log) interface{} {
-	aFsm.RWLock.Lock()
+	//aFsm.RWLock.Lock()
 	aFsm.Counter = aFsm.Counter + 1
-	fmt.Println(aFsm.Counter)
-	aFsm.RWLock.Unlock()
-	return nil
+	if aFsm.Counter%1000 == 0 {
+		fmt.Println("nobatch", aFsm.Counter)
+	}
+	//aFsm.RWLock.Unlock()
+	return fmt.Sprintf("%d", aFsm.Counter)
+}
+
+func (aFsm *AlfheimRaftFSMImpl) ApplyBatch(logs []*raft.Log) []interface{} {
+	result := make([]interface{}, len(logs))
+	for i := range logs {
+		aFsm.Counter = aFsm.Counter + 1
+		if aFsm.Counter%1000 == 0 {
+			fmt.Println("batch", aFsm.Counter, len(logs))
+		}
+
+		result[i] = fmt.Sprintf("%d", aFsm.Counter)
+
+	}
+	return result
 }
 
 func (aFsm *AlfheimRaftFSMImpl) Snapshot() (raft.FSMSnapshot, error) {
