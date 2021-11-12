@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-11 18:00:19
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-12 00:06:07
+ * @LastEditTime: 2021-11-12 10:50:53
  */
 
 package raft
@@ -58,8 +58,10 @@ func initRaft(address string, raftDir string, raftId string) {
 	if err != nil {
 		logrus.Fatal("Listen port error", err)
 	}
+
 	raftConfig := raft.DefaultConfig()
 	raftConfig.LocalID = raft.ServerID(raftId)
+
 	baseDir := filepath.Join(raftDir, raftId)
 	ldb, err := boltdb.NewBoltStore(filepath.Join(baseDir, "logs.dat"))
 	if err != nil {
@@ -97,6 +99,7 @@ func initRaft(address string, raftDir string, raftId string) {
 	// if err := raftFuture.Error(); err != nil {
 	// 	logrus.Fatal("Bootstrap raft cluster error", err)
 	// }
+
 	grpcServer := grpc.NewServer()
 	tm.Register(grpcServer)
 	leaderhealth.Setup(raftIns, grpcServer, []string{"Example"})
