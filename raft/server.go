@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-11 18:00:19
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-12 10:50:53
+ * @LastEditTime: 2021-11-12 22:44:47
  */
 
 package raft
@@ -13,6 +13,8 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
+	"sync"
 
 	"github.com/AlfheimDB/config"
 	"github.com/hashicorp/raft"
@@ -27,12 +29,13 @@ import (
 )
 
 type AlfheimRaftServer struct {
-	RaftId  string
-	MyIP    string
-	MyPort  string
-	RaftDir string
-	RaftFsm raft.FSM
-	Raft    *raft.Raft
+	RaftId      string
+	MyIP        string
+	MyPort      string
+	RaftDir     string
+	RaftFsm     raft.FSM
+	Raft        *raft.Raft
+	RaftCluster []string
 }
 
 var RaftServer *AlfheimRaftServer
@@ -45,6 +48,7 @@ func Init() {
 
 func initRaft(address string, raftDir string, raftId string) {
 	RaftServer = new(AlfheimRaftServer)
+	RaftServer.RaftCluster = config.Config.RaftCluster
 	ip, port, err := net.SplitHostPort(config.Config.RaftAddr)
 	if err != nil {
 		logrus.Fatal("Unknow ip and port", config.Config.RaftAddr)
@@ -76,7 +80,7 @@ func initRaft(address string, raftDir string, raftId string) {
 		logrus.Fatal("Init snapshot dir error", err)
 	}
 
-	fsm := AlfheimRaftFSMImpl{}
+	fsm := AlfheimRaftFSMImpl{Counter: 0, RWLock: new(sync.RWMutex)}
 	RaftServer.RaftFsm = &fsm
 
 	tm := transport.New(raft.ServerAddress(address), []grpc.DialOption{grpc.WithInsecure()})
@@ -86,20 +90,7 @@ func initRaft(address string, raftDir string, raftId string) {
 		logrus.Fatal("Init raft instance error", err)
 	}
 	RaftServer.Raft = raftIns
-	// cfg := raft.Configuration{
-	// 	Servers: []raft.Server{
-	// 		{
-	// 			Suffrage: raft.Voter,
-	// 			ID:       raft.ServerID(raftId),
-	// 			Address:  raft.ServerAddress(address),
-	// 		},
-	// 	},
-	// }
-	// raftFuture := raftIns.BootstrapCluster(cfg)
-	// if err := raftFuture.Error(); err != nil {
-	// 	logrus.Fatal("Bootstrap raft cluster error", err)
-	// }
-
+	RaftServer.Bootstrap()
 	grpcServer := grpc.NewServer()
 	tm.Register(grpcServer)
 	leaderhealth.Setup(raftIns, grpcServer, []string{"Example"})
@@ -109,4 +100,29 @@ func initRaft(address string, raftDir string, raftId string) {
 	if err := grpcServer.Serve(sock); err != nil {
 		logrus.Fatal("Grpc serve sock error, ", err)
 	}
+}
+
+func (aServer *AlfheimRaftServer) Bootstrap() {
+	servers := aServer.Raft.GetConfiguration().Configuration().Servers
+	if len(servers) > 0 {
+		logrus.Info("Not first startup, don't need bootstrap")
+		return
+	}
+	logrus.Info("First start, need bootstrap")
+	var configuration raft.Configuration
+	for _, peerInfo := range aServer.RaftCluster {
+		peer := strings.Split(peerInfo, "/")
+		id := peer[1]
+		addr := peer[0]
+		server := raft.Server{
+			ID:      raft.ServerID(id),
+			Address: raft.ServerAddress(addr),
+		}
+		configuration.Servers = append(configuration.Servers, server)
+	}
+	raftFuture := RaftServer.Raft.BootstrapCluster(configuration)
+	if err := raftFuture.Error(); err != nil {
+		logrus.Fatal("Bootstrap raft cluster error", err)
+	}
+	logrus.Info("Bootstrap done")
 }
