@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-11 18:00:19
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-13 03:06:13
+ * @LastEditTime: 2021-11-15 00:45:17
  */
 
 package raft
@@ -14,20 +14,22 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/AlfheimDB/config"
+	"github.com/AlfheimDB/log"
+	raftbadger "github.com/BBVA/raft-badger"
+
 	"github.com/hashicorp/raft"
-	boltdb "github.com/hashicorp/raft-boltdb"
 	"github.com/sirupsen/logrus"
 )
 
 type AlfheimRaftServer struct {
-	RaftId      string
-	MyIP        string
-	MyPort      string
-	RaftDir     string
+	RaftId  string
+	MyIP    string
+	MyPort  string
+	RaftDir string
+
 	RaftFsm     raft.BatchingFSM
 	Raft        *raft.Raft
 	RaftCluster []string
@@ -36,7 +38,7 @@ type AlfheimRaftServer struct {
 var RaftServer *AlfheimRaftServer
 
 func Init() {
-	logrus.Info("init raft server ")
+	logrus.Info("Init raft server ")
 	initRaft(config.Config.RaftAddr, config.Config.RaftDir, config.Config.RaftId)
 
 }
@@ -44,43 +46,47 @@ func Init() {
 func initRaft(address string, raftDir string, raftId string) {
 	RaftServer = new(AlfheimRaftServer)
 	RaftServer.RaftCluster = config.Config.RaftCluster
+
 	ip, port, err := net.SplitHostPort(config.Config.RaftAddr)
 	if err != nil {
 		logrus.Fatal("Unknow ip and port", config.Config.RaftAddr)
 	}
-	logrus.Info("Bind address Ip: ", ip, " ,port: ", port)
+	logrus.Info("Raft address Ip: ", ip, " ,port: ", port)
+
 	RaftServer.MyIP = ip
 	RaftServer.MyPort = port
 	RaftServer.RaftId = raftId
 	RaftServer.RaftDir = raftDir
-	// sock, err := net.Listen("tcp", config.Config.RaftAddr)
-	// if err != nil {
-	// 	logrus.Fatal("Listen port error", err)
-	// }
 
+	//raft config
 	raftConfig := raft.DefaultConfig()
 	raftConfig.LocalID = raft.ServerID(raftId)
 	raftConfig.BatchApplyCh = true
-	raftConfig.MaxAppendEntries = 1000
+	raftConfig.MaxAppendEntries = config.Config.RaftMaxAppendEntris
+	raftConfig.TrailingLogs = config.Config.RaftTrailingLogs
+	raftConfig.LogLevel = config.Config.LogLevel
+	raftConfig.LogOutput = log.LogWriter
+
+	//init log db
 	baseDir := filepath.Join(raftDir, raftId)
-	//ldb := raft.NewInmemStore()
-	ldb, err := boltdb.NewBoltStore(filepath.Join(baseDir, "logs.dat"))
+	ldb, err := raftbadger.NewBadgerStore(filepath.Join(baseDir, "logs.dat"))
 	if err != nil {
 		logrus.Fatal("Init log db error", err)
 	}
-	sdb, err := boltdb.NewBoltStore(filepath.Join(baseDir, "stable.dat"))
+
+	//init stable db
+	sdb, err := raftbadger.NewBadgerStore(filepath.Join(baseDir, "stable.dat"))
 	if err != nil {
 		logrus.Fatal("Init stable db error", err)
 	}
+
+	//init file snapshot store
 	fss, err := raft.NewFileSnapshotStore(baseDir, 1, os.Stderr)
 	if err != nil {
 		logrus.Fatal("Init snapshot dir error", err)
 	}
 
-	fsm := AlfheimRaftFSMImpl{Counter: 0, RWLock: new(sync.RWMutex)}
-	RaftServer.RaftFsm = &fsm
-
-	//tm := transport.New(raft.ServerAddress(address), []grpc.DialOption{grpc.WithInsecure()})
+	RaftServer.RaftFsm = NewAlfheimRaftFSM()
 
 	addr, err := net.ResolveTCPAddr("tcp", config.Config.RaftAddr)
 	if err != nil {
@@ -91,21 +97,13 @@ func initRaft(address string, raftDir string, raftId string) {
 		logrus.Fatal("Raft addr create error", err)
 	}
 
-	raftIns, err := raft.NewRaft(raftConfig, &fsm, ldb, sdb, fss, transport)
+	raftIns, err := raft.NewRaft(raftConfig, RaftServer.RaftFsm, ldb, sdb, fss, transport)
 	if err != nil {
 		logrus.Fatal("Init raft instance error", err)
 	}
 	RaftServer.Raft = raftIns
 	RaftServer.Bootstrap()
-	// grpcServer := grpc.NewServer()
-	// tm.Register(grpcServer)
-	// leaderhealth.Setup(raftIns, grpcServer, []string{"Example"})
-	// raftadmin.Register(grpcServer, raftIns)
-	// reflection.Register(grpcServer)
-	// logrus.Info("raft init success")
-	// if err := grpcServer.Serve(sock); err != nil {
-	// 	logrus.Fatal("Grpc serve sock error, ", err)
-	// }
+
 }
 
 func (aServer *AlfheimRaftServer) Bootstrap() {

@@ -1,4 +1,4 @@
-loglevel: debug
+loglevel: info
 raftdir: data/
 raftid: id2
 raftaddr: localhost:50012

@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-10-16 17:50:03
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-13 01:23:37
+ * @LastEditTime: 2021-11-14 20:19:09
  */
 package config
 
@@ -17,13 +17,17 @@ import (
 )
 
 type GTConfig struct {
-	LogLevel       string `default:"info"`
-	RaftDir        string `default:"data/"`
-	RaftId         string
-	RaftAddr       string `default:"localhost:50011"`
-	HttpServerAddr string `default:"localhost:12345"`
-	RaftCluster    []string
-	RespServerAddr string
+	LogLevel             string `default:"info"`
+	RaftDir              string `default:"data/"`
+	RaftId               string
+	RaftAddr             string `default:"localhost:50011"`
+	HttpServerAddr       string `default:"localhost:12345"`
+	RaftCluster          []string
+	RespServerAddr       string
+	RaftSnapshotInterval int    `default:"1"`
+	RaftMaxAppendEntris  int    `default:"1000"`
+	RaftTrailingLogs     uint64 `default:"1024000"`
+	LogType              string `default:"stdout"`
 }
 
 var Config GTConfig
@@ -35,6 +39,7 @@ func Init() {
 	raftCluster := flag.String("raft_cluster", "", "Raft cluster list")
 	httpserverAddr := flag.String("httpserver_addr", Config.HttpServerAddr, "Http test server addr")
 	respserverAddr := flag.String("respserver_addr", Config.RespServerAddr, "Resp server addr")
+	logtype := flag.String("logtype", Config.LogType, "Log type, file or stdout")
 	flag.Parse()
 	if *raftCluster == "" {
 		logrus.Fatal("Raft cluster is empty!")
@@ -42,6 +47,10 @@ func Init() {
 	Config.RaftCluster = strings.Split(*raftCluster, ",")
 	Config.RaftAddr = *myAddr
 	Config.RaftId = *raftId
+	Config.LogType = *logtype
+	if *httpserverAddr == "" {
+		logrus.Info("No need http server")
+	}
 	Config.HttpServerAddr = *httpserverAddr
 
 	if *respserverAddr == "" {
