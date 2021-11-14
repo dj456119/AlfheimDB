@@ -1,1 +1,5 @@
-loglevel: debug
+loglevel: info
+raftdir: data/
+raftid: id2
+raftaddr: localhost:50012
+httpserveraddr: localhost:50013
