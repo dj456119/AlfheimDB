@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-13 18:43:19
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-14 20:32:12
+ * @LastEditTime: 2021-11-15 13:57:53
  */
 
 package store
@@ -20,18 +20,18 @@ type MemStoreDatabase struct {
 	StringStore map[string]string `json:"stringstore"`
 }
 
-func NewMemStoreDatabase() MemStoreDatabase {
-	return MemStoreDatabase{RWMutex: new(sync.RWMutex), StringStore: make(map[string]string)}
+func NewMemStoreDatabase() *MemStoreDatabase {
+	return &MemStoreDatabase{RWMutex: new(sync.RWMutex), StringStore: make(map[string]string)}
 }
 
-func (memStore MemStoreDatabase) Set(key, value string) string {
+func (memStore *MemStoreDatabase) Set(key, value string) string {
 	memStore.RWMutex.Lock()
 	memStore.StringStore[key] = value
 	memStore.RWMutex.Unlock()
 	return "ok"
 }
 
-func (memStore MemStoreDatabase) Get(key string) string {
+func (memStore *MemStoreDatabase) Get(key string) string {
 	var result string
 	memStore.RWMutex.RLock()
 	result = memStore.StringStore[key]
@@ -39,7 +39,7 @@ func (memStore MemStoreDatabase) Get(key string) string {
 	return result
 }
 
-func (memStore MemStoreDatabase) Incr(key string) (string, error) {
+func (memStore *MemStoreDatabase) Incr(key string) (string, error) {
 	memStore.RWMutex.Lock()
 	if value, ok := memStore.StringStore[key]; ok {
 		int64value, err := strconv.ParseInt(value, 10, 64)
@@ -59,21 +59,21 @@ func (memStore MemStoreDatabase) Incr(key string) (string, error) {
 	}
 }
 
-func (memStore MemStoreDatabase) Del(key string) string {
+func (memStore *MemStoreDatabase) Del(key string) string {
 	memStore.RWMutex.Lock()
 	delete(memStore.StringStore, key)
 	memStore.RWMutex.Unlock()
 	return "ok"
 }
 
-func (memStore MemStoreDatabase) Snapshot() ([]byte, error) {
+func (memStore *MemStoreDatabase) Snapshot() ([]byte, error) {
 	memStore.RWMutex.RLock()
 	buff, err := json.Marshal(memStore.StringStore)
 	memStore.RWMutex.RUnlock()
 	return buff, err
 }
 
-func (memStore MemStoreDatabase) LoadSnapshot(data []byte) error {
+func (memStore *MemStoreDatabase) LoadSnapshot(data []byte) error {
 	stringstore := make(map[string]string)
 	memStore.RWMutex.Lock()
 	err := json.Unmarshal(data, &stringstore)

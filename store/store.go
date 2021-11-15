@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-13 18:05:16
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-14 20:32:22
+ * @LastEditTime: 2021-11-15 13:57:35
  */
 package store
 
@@ -20,5 +20,5 @@ type AlfheimdbStore interface {
 }
 
 func Init() {
-	ADBStore = NewMemStoreDatabase()
+	ADBStore = NewSyncMemStoreDatabase()
 }

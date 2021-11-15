@@ -12,12 +12,10 @@ require (
 	github.com/lestrrat-go/strftime v1.0.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sirupsen/logrus v1.8.1
-	github.com/tidwall/raft-wal v0.1.5
 	github.com/tidwall/redcon v1.4.2 // indirect
 	golang.org/x/sys v0.0.0-20211112164355-7580c6e521dc // indirect
 	google.golang.org/grpc v1.42.0
 	k8s.io/client-go v0.22.3
 )
 
-replace github.com/hashicorp/raft => ../raft
-replace github.com/tidwall/raft-wal => ../raft-wal
+//replace github.com/hashicorp/raft => ../raft
