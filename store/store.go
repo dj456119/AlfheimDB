@@ -4,9 +4,14 @@
  * @Author: cm.d
  * @Date: 2021-11-13 18:05:16
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-15 13:57:35
+ * @LastEditTime: 2021-11-16 11:34:47
  */
 package store
+
+import (
+	"github.com/AlfheimDB/config"
+	"github.com/sirupsen/logrus"
+)
 
 var ADBStore AlfheimdbStore
 
@@ -20,5 +25,13 @@ type AlfheimdbStore interface {
 }
 
 func Init() {
-	ADBStore = NewSyncMemStoreDatabase()
+	switch config.Config.StoreEngine {
+	case "syncmap":
+		ADBStore = NewSyncMemStoreDatabase()
+	case "map":
+		ADBStore = NewMemStoreDatabase()
+	default:
+		logrus.Fatal("Unknow store engine")
+	}
+
 }

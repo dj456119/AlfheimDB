@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-10-16 17:50:03
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-14 20:19:09
+ * @LastEditTime: 2021-11-16 11:13:43
  */
 package config
 
@@ -28,6 +28,7 @@ type GTConfig struct {
 	RaftMaxAppendEntris  int    `default:"1000"`
 	RaftTrailingLogs     uint64 `default:"1024000"`
 	LogType              string `default:"stdout"`
+	StoreEngine          string `default:"syncmap"`
 }
 
 var Config GTConfig

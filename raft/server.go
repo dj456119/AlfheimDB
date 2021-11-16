@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-11 18:00:19
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-15 00:45:17
+ * @LastEditTime: 2021-11-16 11:17:42
  */
 
 package raft
@@ -67,8 +67,13 @@ func initRaft(address string, raftDir string, raftId string) {
 	raftConfig.LogLevel = config.Config.LogLevel
 	raftConfig.LogOutput = log.LogWriter
 
-	//init log db
 	baseDir := filepath.Join(raftDir, raftId)
+	err = os.MkdirAll(baseDir, 0666)
+	if err != nil {
+		logrus.Warn("Create dir ", baseDir, " error, ", err)
+	}
+
+	//init log db
 	ldb, err := raftbadger.NewBadgerStore(filepath.Join(baseDir, "logs.dat"))
 	if err != nil {
 		logrus.Fatal("Init log db error", err)
