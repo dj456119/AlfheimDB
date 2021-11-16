@@ -4,14 +4,17 @@
  * @Author: cm.d
  * @Date: 2021-11-11 18:00:19
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-16 11:17:42
+ * @LastEditTime: 2021-11-16 20:58:25
  */
 
 package raft
 
 import (
+	"bytes"
+	"fmt"
 	"net"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -68,47 +71,68 @@ func initRaft(address string, raftDir string, raftId string) {
 	raftConfig.LogOutput = log.LogWriter
 
 	baseDir := filepath.Join(raftDir, raftId)
-	err = os.MkdirAll(baseDir, 0666)
-	if err != nil {
-		logrus.Warn("Create dir ", baseDir, " error, ", err)
-	}
 
-	//init log db
+	//If umask is not 0, need chmod
+	shell(fmt.Sprintf("mkdir %s", baseDir))
+
+	//Init log db
 	ldb, err := raftbadger.NewBadgerStore(filepath.Join(baseDir, "logs.dat"))
 	if err != nil {
-		logrus.Fatal("Init log db error", err)
+		logrus.Fatal("Init log db error, ", err)
 	}
 
-	//init stable db
+	//Init stable db
 	sdb, err := raftbadger.NewBadgerStore(filepath.Join(baseDir, "stable.dat"))
 	if err != nil {
-		logrus.Fatal("Init stable db error", err)
+		logrus.Fatal("Init stable db error, ", err)
 	}
 
-	//init file snapshot store
+	//Init file snapshot store
 	fss, err := raft.NewFileSnapshotStore(baseDir, 1, os.Stderr)
 	if err != nil {
-		logrus.Fatal("Init snapshot dir error", err)
+		logrus.Fatal("Init snapshot dir error, ", err)
 	}
 
+	//Create raft fsm
 	RaftServer.RaftFsm = NewAlfheimRaftFSM()
 
 	addr, err := net.ResolveTCPAddr("tcp", config.Config.RaftAddr)
 	if err != nil {
-		logrus.Fatal("Raft addr resolve error", err)
-	}
-	transport, err := raft.NewTCPTransport(config.Config.RaftAddr, addr, 2, 5*time.Second, os.Stderr)
-	if err != nil {
-		logrus.Fatal("Raft addr create error", err)
+		logrus.Fatal("Raft addr resolve error, ", err)
 	}
 
+	//Use default net transport in raft lib
+	transport, err := raft.NewTCPTransport(config.Config.RaftAddr, addr, 2, 5*time.Second, os.Stderr)
+	if err != nil {
+		logrus.Fatal("Raft addr create error, ", err)
+	}
+
+	//Create raft instance
 	raftIns, err := raft.NewRaft(raftConfig, RaftServer.RaftFsm, ldb, sdb, fss, transport)
 	if err != nil {
-		logrus.Fatal("Init raft instance error", err)
+		logrus.Fatal("Init raft instance error, ", err)
 	}
 	RaftServer.Raft = raftIns
 	RaftServer.Bootstrap()
 
+}
+
+func shell(command string) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd := exec.Command("bash", "-c", command)
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	if err != nil {
+		logrus.Error("err cmd :", command)
+		logrus.Error("stdout: ", stdout.String())
+		logrus.Error("stderr: ", stderr.String())
+		logrus.Fatal(err)
+	}
+	logrus.Info("exec cmd done:", command)
+	logrus.Info("stdout: ", stdout.String())
+	logrus.Info("stderr: ", stderr.String())
 }
 
 func (aServer *AlfheimRaftServer) Bootstrap() {
@@ -131,7 +155,7 @@ func (aServer *AlfheimRaftServer) Bootstrap() {
 	}
 	raftFuture := RaftServer.Raft.BootstrapCluster(configuration)
 	if err := raftFuture.Error(); err != nil {
-		logrus.Fatal("Bootstrap raft cluster error", err)
+		logrus.Fatal("Bootstrap raft cluster error, ", err)
 	}
 	logrus.Info("Bootstrap done")
 }
