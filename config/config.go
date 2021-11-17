@@ -4,12 +4,13 @@
  * @Author: cm.d
  * @Date: 2021-10-16 17:50:03
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-16 11:13:43
+ * @LastEditTime: 2021-11-17 18:22:02
  */
 package config
 
 import (
 	"flag"
+	"log"
 	"strings"
 
 	"github.com/jinzhu/configor"
@@ -35,6 +36,7 @@ var Config GTConfig
 
 func Init() {
 	configor.Load(&Config, "config.yaml")
+
 	myAddr := flag.String("raft_addr", Config.RaftAddr, "TCP host+port for this node")
 	raftId := flag.String("raft_id", Config.RaftId, "Node id used by Raft")
 	raftCluster := flag.String("raft_cluster", "", "Raft cluster list")
@@ -42,10 +44,19 @@ func Init() {
 	respserverAddr := flag.String("respserver_addr", Config.RespServerAddr, "Resp server addr")
 	logtype := flag.String("logtype", Config.LogType, "Log type, file or stdout")
 	flag.Parse()
-	if *raftCluster == "" {
-		logrus.Fatal("Raft cluster is empty!")
+
+	if *raftId == "" {
+		log.Fatal("Raft id is empty")
 	}
-	Config.RaftCluster = strings.Split(*raftCluster, ",")
+
+	if *raftCluster != "" {
+		Config.RaftCluster = strings.Split(*raftCluster, ",")
+	}
+
+	if Config.RaftCluster == nil || len(Config.RaftCluster) == 0 {
+		log.Fatal("Raft cluster is empty")
+	}
+
 	Config.RaftAddr = *myAddr
 	Config.RaftId = *raftId
 	Config.LogType = *logtype

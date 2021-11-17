@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-12 09:51:16
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-16 21:01:52
+ * @LastEditTime: 2021-11-17 18:08:52
 -->
 
 # AlfheimDB
@@ -70,9 +70,6 @@ Set/Incr and Get:
 
 ```` shell
 ./redis-benchmark -p 6379 -t set,get -n 1000000 -q  -c 512
-ERROR: ERR unknown command 'CONFIG'
-ERROR: failed to fetch CONFIG from 127.0.0.1:6379
-WARN: could not fetch server CONFIG
 SET: 114850.12 requests per second, p50=2.727 msec                    
 GET: 161524.80 requests per second, p50=1.447 msec 
 ````
@@ -83,12 +80,20 @@ Set/Incr and Get:
 
 ```` shell
 ./redis-benchmark -p 6379 -t set,get -n 500000 -q  -c 512
-ERROR: ERR unknown command 'CONFIG'
-ERROR: failed to fetch CONFIG from 127.0.0.1:6379
-WARN: could not fetch server CONFIG
 SET: 66952.33 requests per second, p50=6.279 msec                    
 GET: 161917.09 requests per second, p50=1.447 msec 
 ````
+
+## Centos 7 8c8g
+
+### Single node test case
+
+```` shell
+./redis-benchmark -p 6379 -t set,get -n 500000 -q  -c 512
+SET: 40038.44 requests per second, p50=10.431 msec
+GET: 100684.66 requests per second, p50=2.423 msec 
+````  
+
 
 # References
 

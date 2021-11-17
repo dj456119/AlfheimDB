@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-11 18:00:19
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-16 20:58:25
+ * @LastEditTime: 2021-11-17 17:50:43
  */
 
 package raft
@@ -125,10 +125,10 @@ func shell(command string) {
 	cmd.Stderr = &stderr
 	err := cmd.Run()
 	if err != nil {
-		logrus.Error("err cmd :", command)
-		logrus.Error("stdout: ", stdout.String())
-		logrus.Error("stderr: ", stderr.String())
-		logrus.Fatal(err)
+		logrus.Info("err cmd :", command)
+		logrus.Info("stdout: ", stdout.String())
+		logrus.Info("stderr: ", stderr.String())
+		logrus.Info(err)
 	}
 	logrus.Info("exec cmd done:", command)
 	logrus.Info("stdout: ", stdout.String())

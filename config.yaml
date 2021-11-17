@@ -1,5 +1,8 @@
-loglevel: info
+loglevel: debug
 raftdir: data/
-raftid: id2
+raftid: id1
 raftaddr: localhost:50012
+raftcluster: 
+  - localhost:50012/id1
 httpserveraddr: localhost:50013
+respserveraddr: localhost:6379

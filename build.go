@@ -6,26 +6,70 @@
  * @Author: cm.d
  * @Date: 2021-11-15 20:18:19
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-16 11:18:08
+ * @LastEditTime: 2021-11-17 17:29:46
  */
 package main
 
 import (
+	"log"
 	"os"
 
 	"github.com/magefile/mage/sh"
 	"github.com/sirupsen/logrus"
 )
 
-func Build() {
-	logrus.Info("Build AlfheimDB without cgo")
+func Build(system string) {
 	env := make(map[string]string)
 	env["CGO_ENABLED"] = "0"
-	err := sh.Run("go", "build")
+	switch system {
+	case "linux":
+		env["GOARCH"] = "amd64"
+		env["GOOS"] = "linux"
+	case "macos":
+		env["GOARCH"] = "amd64"
+		env["GOOS"] = "darwin"
+	default:
+		logrus.Fatal("Unknow platform, ", system)
+	}
+	logrus.Info("Build AlfheimDB without cgo, platform: ", system)
+
+	err := sh.RunWith(env, "go", "build")
 	if err != nil {
 		logrus.Fatal("Build AlfheimDB error, ", err)
 	}
 	logrus.Info("Build AlfheimDB ok")
+}
+
+func Package() {
+	logrus.Info("Clean old target dir")
+	sh.Run("rm", "-rf", "target")
+	logrus.Info("Create new target dir")
+	err := sh.Run("mkdir", "target")
+	if err != nil {
+		log.Fatal("Create new target dir error, ", err)
+	}
+	logrus.Info("Packaging...")
+	err = sh.Run("cp", "AlfheimDB", "target/")
+	if err != nil {
+		logrus.Fatal("Copy AlftheimDB error, ", err)
+	}
+	err = sh.Run("cp", "config.yaml", "target/")
+	if err != nil {
+		logrus.Fatal("Copy config.yaml error, ", err)
+	}
+	err = sh.Run("mkdir", "target/data")
+	if err != nil {
+		logrus.Fatal("Mkdir raft data dir error, ", err)
+	}
+	err = sh.Run("mkdir", "target/runtime-log")
+	if err != nil {
+		logrus.Fatal("Mkdir log dir error, ", err)
+	}
+	err = sh.Run("chmod", "+x", "target/AlfheimDB")
+	if err != nil {
+		logrus.Fatal("Chmod AlfheimDB error, ", err)
+	}
+	logrus.Info("Package done")
 }
 
 func InitDataDir() {
