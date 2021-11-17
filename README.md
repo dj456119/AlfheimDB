@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-12 09:51:16
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-17 18:08:52
+ * @LastEditTime: 2021-11-17 18:50:09
 -->
 
 # AlfheimDB
@@ -62,7 +62,7 @@ String
 
 # Benchmarks
 
-## Macbook pro 13, 2020(M1)  
+## Macbook pro 13, 2020(M1) SSD  
 
 ### Single node test case
 
@@ -84,7 +84,7 @@ SET: 66952.33 requests per second, p50=6.279 msec
 GET: 161917.09 requests per second, p50=1.447 msec 
 ````
 
-## Centos 7 8c8g
+## Centos 7 8c8g HDD
 
 ### Single node test case
 
@@ -94,6 +94,15 @@ SET: 40038.44 requests per second, p50=10.431 msec
 GET: 100684.66 requests per second, p50=2.423 msec 
 ````  
 
+### Three node test case
+
+Set/Incr and Get:
+
+```` shell
+./redis-benchmark -p 6379 -t set,get -n 500000 -q  -c 1024
+SET: 23836.77 requests per second, p50=39.391 msec                    
+GET: 92114.96 requests per second, p50=5.375 msec
+````
 
 # References
 
