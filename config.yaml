@@ -8,3 +8,4 @@ raftcluster:
   - localhost:40002/id3
 httpserveraddr: localhost:12345
 respserveraddr: localhost:6379
+walengine: alfheimdbwal

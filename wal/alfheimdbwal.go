@@ -4,11 +4,12 @@
  * @Author: cm.d
  * @Date: 2021-11-22 11:39:04
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-22 13:03:47
+ * @LastEditTime: 2021-11-22 15:31:11
  */
 package wal
 
 import (
+	"github.com/AlfheimDB/config"
 	"github.com/AlfheimDB/pb"
 	alfheimdbwal "github.com/dj456119/AlfheimDB-WAL"
 	"github.com/golang/protobuf/ptypes"
@@ -53,7 +54,7 @@ func (ae AlheimDBWALRaftEngine) StoreLog(log *raft.Log) error {
 	if err != nil {
 		return err
 	}
-	lItem := alfheimdbwal.NewLogItemBuff(int64(log.Index), buff, ae.WriteBuff, true)
+	lItem := alfheimdbwal.NewLogItemBuff(int64(log.Index), buff, ae.WriteBuff, config.Config.IsBigEndian)
 	ae.WAL.WriteLog(lItem, ae.WriteBuff[:8+8+len(buff)])
 	return nil
 }
@@ -71,7 +72,7 @@ func (ae AlheimDBWALRaftEngine) StoreLogs(logs []*raft.Log) error {
 		if err != nil {
 			return err
 		}
-		lItem := alfheimdbwal.NewLogItemBuff(int64(log.Index), buff, ae.WriteBuff[pos:], true)
+		lItem := alfheimdbwal.NewLogItemBuff(int64(log.Index), buff, ae.WriteBuff[pos:], config.Config.IsBigEndian)
 		lItems[i] = lItem
 		pos = pos + 8 + 8 + len(buff)
 	}

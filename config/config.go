@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-10-16 17:50:03
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-22 11:36:01
+ * @LastEditTime: 2021-11-22 15:30:35
  */
 package config
 
@@ -31,6 +31,7 @@ type GTConfig struct {
 	LogType              string `default:"stdout"`
 	StoreEngine          string `default:"syncmap"`
 	WALEngine            string `default:"badger"`
+	IsBigEndian          bool   `default:true`
 }
 
 var Config GTConfig

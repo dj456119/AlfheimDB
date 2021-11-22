@@ -23,3 +23,4 @@ require (
 )
 
 replace github.com/hashicorp/raft => ../raft
+replace github.com/dj456119/AlfheimDB-WAL => /Users/chunming.dong/Downloads/wal/AlfheimDB-WAL
