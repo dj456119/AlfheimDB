@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-10-16 17:50:03
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-17 18:22:02
+ * @LastEditTime: 2021-11-22 11:36:01
  */
 package config
 
@@ -30,6 +30,7 @@ type GTConfig struct {
 	RaftTrailingLogs     uint64 `default:"1024000"`
 	LogType              string `default:"stdout"`
 	StoreEngine          string `default:"syncmap"`
+	WALEngine            string `default:"badger"`
 }
 
 var Config GTConfig

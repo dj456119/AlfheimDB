@@ -4,12 +4,12 @@
  * @Author: cm.d
  * @Date: 2021-11-12 09:51:16
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-17 18:50:09
+ * @LastEditTime: 2021-11-22 13:09:50
 -->
 
 # AlfheimDB
 
-A linearizability distributed database by raft and wisckey, which supports redis client.  
+A linearizability distributed database by raft and wisckey, which supports redis client. The badger is default raft log store, you can use [AlfheimDB-WAL](https://github.com/dj456119/AlfheimDB-WAL) instead of it.
 
 # Build
 
@@ -48,6 +48,7 @@ mage test id3
 + Go 1.16  
 + mage
 + [raft](https://github.com/hashicorp/raft)
++ [AlfheimDB-WAL](https://github.com/dj456119/AlfheimDB-WAL)
 + [badger](https://github.com/dgraph-io/badger)
 + [redcon](https://github.com/tidwall/redcon)
 
@@ -114,7 +115,7 @@ Wisckey: ["WiscKey: Separating Keys from Values in SSD-conscious Storage"](https
 
 + [ ] WASM script
 + [x] mage build
-+ [ ] High performance WAL log
++ [x] High performance WAL log
 + [ ] Set support
 + [ ] Map support
 + [ ] ZSet support

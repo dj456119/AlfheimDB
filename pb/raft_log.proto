@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package pb;
+
+import public "google/protobuf/timestamp.proto";
+
+option go_package = "./;pb";
+
+message RaftLog {
+    uint64 Index = 1;
+    uint64 Term = 2;
+    bytes Data = 3;
+    bytes Extensions =4;
+    google.protobuf.Timestamp AppendedAt = 5;
+    uint32 Type = 6;
+}

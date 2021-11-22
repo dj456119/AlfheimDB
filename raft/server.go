@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-11 18:00:19
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-17 17:50:43
+ * @LastEditTime: 2021-11-22 13:02:38
  */
 
 package raft
@@ -21,6 +21,7 @@ import (
 
 	"github.com/AlfheimDB/config"
 	"github.com/AlfheimDB/log"
+	"github.com/AlfheimDB/wal"
 	raftbadger "github.com/BBVA/raft-badger"
 
 	"github.com/hashicorp/raft"
@@ -76,7 +77,7 @@ func initRaft(address string, raftDir string, raftId string) {
 	shell(fmt.Sprintf("mkdir %s", baseDir))
 
 	//Init log db
-	ldb, err := raftbadger.NewBadgerStore(filepath.Join(baseDir, "logs.dat"))
+	ldb, err := wal.NewWAL(baseDir)
 	if err != nil {
 		logrus.Fatal("Init log db error, ", err)
 	}
