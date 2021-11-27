@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/BBVA/raft-badger v1.1.0 // indirect
-	github.com/dj456119/AlfheimDB-WAL v0.0.0-20211121163937-ef8e6becbc16 // indirect
+	github.com/dj456119/AlfheimDB-WAL v0.0.0-20211127050158-fcdd0a156f70 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/pprof v0.0.0-20211108044417-e9b028704de0 // indirect
 	github.com/hashicorp/raft v1.3.2
@@ -23,4 +23,5 @@ require (
 )
 
 replace github.com/hashicorp/raft => ../raft
-replace github.com/dj456119/AlfheimDB-WAL => /Users/chunming.dong/Downloads/wal/AlfheimDB-WAL
+
+//replace github.com/dj456119/AlfheimDB-WAL => /Users/chunming.dong/Downloads/wal/AlfheimDB-WAL

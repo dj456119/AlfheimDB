@@ -98,6 +98,8 @@ github.com/dgryski/go-farm v0.0.0-20190423205320-6a90982ecee2/go.mod h1:SqUrOPUn
 github.com/dgryski/go-farm v0.0.0-20191112170834-c2139c5d712b/go.mod h1:SqUrOPUnsFjfmXRMNPybcSiG0BgUW2AuFH8PAnS2iTw=
 github.com/dj456119/AlfheimDB-WAL v0.0.0-20211121163937-ef8e6becbc16 h1:Cfji2giU9cK8s2ImFal9UGbJCg/iVCGleR/4UgGnT1w=
 github.com/dj456119/AlfheimDB-WAL v0.0.0-20211121163937-ef8e6becbc16/go.mod h1:47nL9Uz3WvE9apMpUMhk1r72T4Tma1YCsX3C1bPFNd0=
+github.com/dj456119/AlfheimDB-WAL v0.0.0-20211127050158-fcdd0a156f70 h1:PRiTkPWNJmvI3aNHMu0ZUKgjeSRNR4TFhyntsl5Tkpc=
+github.com/dj456119/AlfheimDB-WAL v0.0.0-20211127050158-fcdd0a156f70/go.mod h1:47nL9Uz3WvE9apMpUMhk1r72T4Tma1YCsX3C1bPFNd0=
 github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815/go.mod h1:WwZ+bS3ebgob9U8Nd0kOddGdZWjyMGR8Wziv+TBNwSE=
 github.com/dustin/go-humanize v1.0.0 h1:VSnTsYCnlFHaM2/igO1h6X3HA71jcobQuxemgkq4zYo=
 github.com/dustin/go-humanize v1.0.0/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25KnS6fMYU6eOk=

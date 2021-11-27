@@ -4,11 +4,13 @@
  * @Author: cm.d
  * @Date: 2021-11-22 11:39:04
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-22 15:31:11
+ * @LastEditTime: 2021-11-27 13:13:59
  */
 package wal
 
 import (
+	"sync"
+
 	"github.com/AlfheimDB/config"
 	"github.com/AlfheimDB/pb"
 	alfheimdbwal "github.com/dj456119/AlfheimDB-WAL"
@@ -24,8 +26,15 @@ type AlheimDBWALRaftEngine struct {
 
 func NewAlheimDBWALRaftEngine(basedir string) raft.LogStore {
 	engine := new(AlheimDBWALRaftEngine)
-	engine.WAL = alfheimdbwal.NewWAL(basedir)
-	engine.WriteBuff = make([]byte, 1024*100)
+	wal := &alfheimdbwal.AlfheimDBWAL{
+		Dirname:     basedir,
+		MaxItems:    100000,
+		IsBigEndian: true,
+		Mutex:       new(sync.Mutex),
+	}
+	wal.BuildDirIndex()
+	engine.WAL = wal
+	engine.WriteBuff = make([]byte, 10*(1>>10))
 	return engine
 }
 
