@@ -9,3 +9,5 @@ raftcluster:
 httpserveraddr: localhost:12345
 respserveraddr: localhost:6379
 walengine: alfheimdbwal
+
+storeengine: badger

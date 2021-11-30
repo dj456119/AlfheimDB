@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-11 18:00:19
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-22 13:02:38
+ * @LastEditTime: 2021-11-30 22:34:28
  */
 
 package raft
@@ -71,25 +71,23 @@ func initRaft(address string, raftDir string, raftId string) {
 	raftConfig.LogLevel = config.Config.LogLevel
 	raftConfig.LogOutput = log.LogWriter
 
-	baseDir := filepath.Join(raftDir, raftId)
-
 	//If umask is not 0, need chmod
-	shell(fmt.Sprintf("mkdir %s", baseDir))
+	shell(fmt.Sprintf("mkdir %s", config.Config.BaseDir))
 
 	//Init log db
-	ldb, err := wal.NewWAL(baseDir)
+	ldb, err := wal.NewWAL(config.Config.BaseDir)
 	if err != nil {
 		logrus.Fatal("Init log db error, ", err)
 	}
 
 	//Init stable db
-	sdb, err := raftbadger.NewBadgerStore(filepath.Join(baseDir, "stable.dat"))
+	sdb, err := raftbadger.NewBadgerStore(filepath.Join(config.Config.BaseDir, "stable.dat"))
 	if err != nil {
 		logrus.Fatal("Init stable db error, ", err)
 	}
 
 	//Init file snapshot store
-	fss, err := raft.NewFileSnapshotStore(baseDir, 1, os.Stderr)
+	fss, err := raft.NewFileSnapshotStore(config.Config.BaseDir, 1, os.Stderr)
 	if err != nil {
 		logrus.Fatal("Init snapshot dir error, ", err)
 	}
@@ -103,7 +101,7 @@ func initRaft(address string, raftDir string, raftId string) {
 	}
 
 	//Use default net transport in raft lib
-	transport, err := raft.NewTCPTransport(config.Config.RaftAddr, addr, 2, 5*time.Second, os.Stderr)
+	transport, err := raft.NewTCPTransport(config.Config.RaftAddr, addr, 100, 5*time.Second, os.Stderr)
 	if err != nil {
 		logrus.Fatal("Raft addr create error, ", err)
 	}

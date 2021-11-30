@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-13 18:05:16
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-16 11:34:47
+ * @LastEditTime: 2021-11-30 22:35:09
  */
 package store
 
@@ -16,10 +16,10 @@ import (
 var ADBStore AlfheimdbStore
 
 type AlfheimdbStore interface {
-	Set(string, string) string
-	Get(string) string
-	Incr(string) (string, error)
-	Del(string) string
+	Set(key string, value string) error
+	Get(key string) (string, error)
+	Incr(key string) (string, error)
+	Del(key string) error
 	Snapshot() ([]byte, error)
 	LoadSnapshot(data []byte) error
 }
@@ -30,6 +30,8 @@ func Init() {
 		ADBStore = NewSyncMemStoreDatabase()
 	case "map":
 		ADBStore = NewMemStoreDatabase()
+	case "badger":
+		ADBStore = NewBadgerDBStore(config.Config.BaseDir)
 	default:
 		logrus.Fatal("Unknow store engine")
 	}

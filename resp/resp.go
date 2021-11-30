@@ -4,11 +4,12 @@
  * @Author: cm.d
  * @Date: 2021-11-13 01:06:51
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-14 15:53:42
+ * @LastEditTime: 2021-11-30 21:03:18
  */
 package resp
 
 import (
+	"errors"
 	"strings"
 	"time"
 
@@ -38,21 +39,31 @@ func Init() {
 func CommandExec(conn redcon.Conn, cmd redcon.Command) {
 	switch strings.ToLower(string(cmd.Args[0])) {
 	default:
-		conn.WriteError("ERR unknown command '" + string(cmd.Args[0]) + "'")
+		execCommand(1, conn, cmd, func(cmd redcon.Command) raft.FsmResponse {
+			return raft.FsmResponse{Error: errors.New("ERR unknown command '" + string(cmd.Args[0]) + "'")}
+		})
 	case "ping":
-		pingCommand(conn, cmd)
+		execCommand(1, conn, cmd, func(cmd redcon.Command) raft.FsmResponse {
+			return raft.FsmResponse{Data: "pong"}
+		})
 	case "quit":
-		quitCommand(conn, cmd)
+		execCommand(1, conn, cmd, func(cmd redcon.Command) raft.FsmResponse {
+			return raft.FsmResponse{Data: "quit ok"}
+		})
+		conn.Close()
 	case "test":
-		testCommand(conn, cmd)
+		execCommandByFsm(1, conn, cmd, RESP_TEST_TIMEOUT)
 	case "incr":
-		incrCommand(conn, cmd)
+		execCommandByFsm(2, conn, cmd, RESP_INCR_TIMEOUT)
 	case "set":
-		setCommand(conn, cmd)
+		execCommandByFsm(3, conn, cmd, RESP_SET_TIMEOUT)
 	case "get":
-		getCommand(conn, cmd)
+		execCommand(2, conn, cmd, func(cmd redcon.Command) raft.FsmResponse {
+			data, err := store.ADBStore.Get(string(cmd.Args[1]))
+			return raft.FsmResponse{Data: data, Error: err}
+		})
 	case "del":
-		delCommand(conn, cmd)
+		execCommandByFsm(2, conn, cmd, RESP_GET_TIMEOUT)
 	}
 }
 
@@ -65,78 +76,39 @@ func Close(conn redcon.Conn, err error) {
 	logrus.Debug("Close client, address: ", conn.NetConn().RemoteAddr())
 }
 
-func testCommand(conn redcon.Conn, cmd redcon.Command) {
-	future := raft.RaftServer.Raft.Apply(cmd.Raw, RESP_TEST_TIMEOUT)
+func execCommand(argsLength int, conn redcon.Conn, cmd redcon.Command, exec func(cmd redcon.Command) raft.FsmResponse) {
+	if len(cmd.Args) < argsLength {
+		conn.WriteError("ERR wrong number of arguments for '" + string(cmd.Args[0]) + "' command")
+		return
+	}
+	response := exec(cmd)
+	if response.Error != nil {
+		conn.WriteError(response.Error.Error())
+		return
+	}
+	conn.WriteString(response.Data)
+}
+
+func execCommandByFsm(argsLength int, conn redcon.Conn, cmd redcon.Command, timeout time.Duration) {
+	if len(cmd.Args) < argsLength {
+		conn.WriteError("ERR wrong number of arguments for '" + string(cmd.Args[0]) + "' command")
+		return
+	}
+	future := raft.RaftServer.Raft.Apply(cmd.Raw, timeout)
 	err := future.Error()
 	if err != nil {
 		conn.WriteError(err.Error())
 		return
 	}
-	conn.WriteString(future.Response().(string))
-}
-
-func incrCommand(conn redcon.Conn, cmd redcon.Command) {
-	if len(cmd.Args) < 2 {
-		conn.WriteError("ERR wrong number of arguments for '" + string(cmd.Args[0]) + "' command")
+	respInterface := future.Response()
+	if respInterface == nil {
+		conn.WriteError("Unknow error")
 		return
 	}
-	future := raft.RaftServer.Raft.Apply(cmd.Raw, RESP_INCR_TIMEOUT)
-	err := future.Error()
-	if err != nil {
-		conn.WriteError(err.Error())
+	response := respInterface.(raft.FsmResponse)
+	if response.Error != nil {
+		conn.WriteError(response.Error.Error())
 		return
 	}
-
-	result := future.Response().([]interface{})
-	if result[1] != nil {
-		conn.WriteError(result[1].(error).Error())
-		return
-	}
-	conn.WriteString(result[0].(string))
-}
-
-func pingCommand(conn redcon.Conn, cmd redcon.Command) {
-	conn.WriteString("pong")
-}
-
-func quitCommand(conn redcon.Conn, cmd redcon.Command) {
-	conn.WriteString("quit ok")
-	conn.Close()
-}
-
-func setCommand(conn redcon.Conn, cmd redcon.Command) {
-	if len(cmd.Args) < 3 {
-		conn.WriteError("ERR wrong number of arguments for '" + string(cmd.Args[0]) + "' command")
-		return
-	}
-	future := raft.RaftServer.Raft.Apply(cmd.Raw, RESP_SET_TIMEOUT)
-	err := future.Error()
-	if err != nil {
-		conn.WriteError(err.Error())
-		return
-	}
-	conn.WriteString(future.Response().(string))
-}
-
-func getCommand(conn redcon.Conn, cmd redcon.Command) {
-	if len(cmd.Args) < 2 {
-		conn.WriteError("ERR wrong number of arguments for '" + string(cmd.Args[0]) + "' command")
-		return
-	}
-	result := store.ADBStore.Get(string(cmd.Args[1]))
-	conn.WriteString(result)
-}
-
-func delCommand(conn redcon.Conn, cmd redcon.Command) {
-	if len(cmd.Args) < 2 {
-		conn.WriteError("ERR wrong number of arguments for '" + string(cmd.Args[0]) + "' command")
-		return
-	}
-	future := raft.RaftServer.Raft.Apply(cmd.Raw, RESP_SET_TIMEOUT)
-	err := future.Error()
-	if err != nil {
-		conn.WriteError(err.Error())
-		return
-	}
-	conn.WriteString(future.Response().(string))
+	conn.WriteString(response.Data)
 }

@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-13 18:43:19
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-15 13:57:39
+ * @LastEditTime: 2021-11-30 21:18:55
  */
 
 package store
@@ -23,25 +23,24 @@ func NewSyncMemStoreDatabase() *SyncMemStoreDatabase {
 	return &SyncMemStoreDatabase{StringStore: new(sync.Map)}
 }
 
-func (memStore *SyncMemStoreDatabase) Set(key, value string) string {
+func (memStore *SyncMemStoreDatabase) Set(key, value string) error {
 	memStore.StringStore.Store(key, value)
-	return "ok"
+	return nil
 }
 
-func (memStore *SyncMemStoreDatabase) Get(key string) string {
+func (memStore *SyncMemStoreDatabase) Get(key string) (string, error) {
 	v, b := memStore.StringStore.Load(key)
 	if !b {
-		return "nil"
+		return "nil", nil
 	}
-	return v.(string)
+	return v.(string), nil
 }
 
 func (memStore *SyncMemStoreDatabase) Incr(key string) (string, error) {
-
 	if value, ok := memStore.StringStore.Load(key); ok {
 		int64value, err := strconv.ParseInt(value.(string), 10, 64)
 		if err != nil {
-			return "parse err", err
+			return "", err
 		}
 		int64value = int64value + 1
 		result := strconv.FormatInt(int64value, 10)
@@ -54,9 +53,9 @@ func (memStore *SyncMemStoreDatabase) Incr(key string) (string, error) {
 	}
 }
 
-func (memStore *SyncMemStoreDatabase) Del(key string) string {
+func (memStore *SyncMemStoreDatabase) Del(key string) error {
 	memStore.StringStore.Delete(key)
-	return "ok"
+	return nil
 }
 
 func (memStore *SyncMemStoreDatabase) Snapshot() ([]byte, error) {

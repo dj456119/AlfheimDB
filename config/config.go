@@ -4,13 +4,14 @@
  * @Author: cm.d
  * @Date: 2021-10-16 17:50:03
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-22 15:30:35
+ * @LastEditTime: 2021-11-30 22:51:30
  */
 package config
 
 import (
 	"flag"
 	"log"
+	"path/filepath"
 	"strings"
 
 	"github.com/jinzhu/configor"
@@ -31,7 +32,8 @@ type GTConfig struct {
 	LogType              string `default:"stdout"`
 	StoreEngine          string `default:"syncmap"`
 	WALEngine            string `default:"badger"`
-	IsBigEndian          bool   `default:true`
+	IsBigEndian          bool   `default:"true"`
+	BaseDir              string
 }
 
 var Config GTConfig
@@ -72,5 +74,6 @@ func Init() {
 	}
 
 	Config.RespServerAddr = *respserverAddr
+	Config.BaseDir = filepath.Join(Config.RaftDir, Config.RaftId)
 	logrus.Info("Init config ok, ", Config)
 }

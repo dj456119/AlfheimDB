@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-13 18:43:19
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-15 13:57:53
+ * @LastEditTime: 2021-11-30 21:01:52
  */
 
 package store
@@ -24,19 +24,19 @@ func NewMemStoreDatabase() *MemStoreDatabase {
 	return &MemStoreDatabase{RWMutex: new(sync.RWMutex), StringStore: make(map[string]string)}
 }
 
-func (memStore *MemStoreDatabase) Set(key, value string) string {
+func (memStore *MemStoreDatabase) Set(key, value string) error {
 	memStore.RWMutex.Lock()
 	memStore.StringStore[key] = value
 	memStore.RWMutex.Unlock()
-	return "ok"
+	return nil
 }
 
-func (memStore *MemStoreDatabase) Get(key string) string {
+func (memStore *MemStoreDatabase) Get(key string) (string, error) {
 	var result string
 	memStore.RWMutex.RLock()
 	result = memStore.StringStore[key]
 	memStore.RWMutex.RUnlock()
-	return result
+	return result, nil
 }
 
 func (memStore *MemStoreDatabase) Incr(key string) (string, error) {
@@ -45,7 +45,7 @@ func (memStore *MemStoreDatabase) Incr(key string) (string, error) {
 		int64value, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
 			memStore.RWMutex.Unlock()
-			return "parse err", err
+			return "", err
 		}
 		int64value = int64value + 1
 		result := strconv.FormatInt(int64value, 10)
@@ -59,11 +59,11 @@ func (memStore *MemStoreDatabase) Incr(key string) (string, error) {
 	}
 }
 
-func (memStore *MemStoreDatabase) Del(key string) string {
+func (memStore *MemStoreDatabase) Del(key string) error {
 	memStore.RWMutex.Lock()
 	delete(memStore.StringStore, key)
 	memStore.RWMutex.Unlock()
-	return "ok"
+	return nil
 }
 
 func (memStore *MemStoreDatabase) Snapshot() ([]byte, error) {

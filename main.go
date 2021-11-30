@@ -1,10 +1,10 @@
 /*
- * @Descripttion:
+ * @Descripttion:Main
  * @version:
  * @Author: cm.d
  * @Date: 2021-11-06 18:48:23
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-14 12:46:00
+ * @LastEditTime: 2021-11-30 21:13:09
  */
 
 package main
@@ -21,15 +21,18 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+//module init
 func init() {
 	config.Init()
 	log.Init()
 	store.Init()
 	go resp.Init()
 	go raft.Init()
-	httpserver.Init()
+	go httpserver.Init()
 }
 
+//main
 func main() {
 	logrus.Info("AlfheimDB is start")
+	select {}
 }

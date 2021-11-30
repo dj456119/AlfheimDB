@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-22 11:39:04
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-27 13:13:59
+ * @LastEditTime: 2021-11-30 21:43:11
  */
 package wal
 
@@ -28,13 +28,13 @@ func NewAlheimDBWALRaftEngine(basedir string) raft.LogStore {
 	engine := new(AlheimDBWALRaftEngine)
 	wal := &alfheimdbwal.AlfheimDBWAL{
 		Dirname:     basedir,
-		MaxItems:    100000,
+		MaxItems:    10000000,
 		IsBigEndian: true,
 		Mutex:       new(sync.Mutex),
 	}
 	wal.BuildDirIndex()
 	engine.WAL = wal
-	engine.WriteBuff = make([]byte, 10*(1>>10))
+	engine.WriteBuff = make([]byte, 10*(1<<26))
 	return engine
 }
 
