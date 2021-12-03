@@ -1,10 +1,10 @@
 /*
- * @Descripttion:
+ * @Descripttion: Alfheim raft server
  * @version:
  * @Author: cm.d
  * @Date: 2021-11-11 18:00:19
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-30 22:34:28
+ * @LastEditTime: 2021-12-02 21:30:38
  */
 
 package raft

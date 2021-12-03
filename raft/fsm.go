@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-11 11:19:46
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-30 21:18:19
+ * @LastEditTime: 2021-12-02 21:35:02
  */
 
 package raft
@@ -46,10 +46,16 @@ func (aFsm *AlfheimRaftFSMImpl) Apply(l *raft.Log) interface{} {
 		return FsmResponse{Data: "test ok"}
 	case "set":
 		err := store.ADBStore.Set(string(cmd.Args[1]), string(cmd.Args[2]))
-		return FsmResponse{Error: err}
+		if err != nil {
+			return FsmResponse{Error: err}
+		}
+		return FsmResponse{Data: "ok"}
 	case "del":
 		err := store.ADBStore.Del(string(cmd.Args[1]))
-		return FsmResponse{Error: err}
+		if err != nil {
+			return FsmResponse{Error: err}
+		}
+		return FsmResponse{Data: "ok"}
 	case "incr":
 		result, err := store.ADBStore.Incr(string(cmd.Args[1]))
 		return FsmResponse{Data: result, Error: err}

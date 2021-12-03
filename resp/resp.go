@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-13 01:06:51
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-30 21:03:18
+ * @LastEditTime: 2021-12-02 22:47:16
  */
 package resp
 
@@ -86,7 +86,8 @@ func execCommand(argsLength int, conn redcon.Conn, cmd redcon.Command, exec func
 		conn.WriteError(response.Error.Error())
 		return
 	}
-	conn.WriteString(response.Data)
+	//conn.WriteString(response.Data)
+	conn.WriteAny(response.Data)
 }
 
 func execCommandByFsm(argsLength int, conn redcon.Conn, cmd redcon.Command, timeout time.Duration) {
@@ -110,5 +111,6 @@ func execCommandByFsm(argsLength int, conn redcon.Conn, cmd redcon.Command, time
 		conn.WriteError(response.Error.Error())
 		return
 	}
-	conn.WriteString(response.Data)
+	conn.WriteAny(response.Data)
+	//conn.WriteString(response.Data)
 }

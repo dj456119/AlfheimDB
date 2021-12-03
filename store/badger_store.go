@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-30 22:08:26
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-30 22:40:44
+ * @LastEditTime: 2021-12-02 21:48:24
  */
 package store
 
@@ -32,10 +32,13 @@ func NewBadgerDBStore(basedir string) *BadgerDBStore {
 }
 
 func (bDB *BadgerDBStore) Set(key string, value string) error {
-	return bDB.DB.Update(func(txn *badger.Txn) error {
+	err := bDB.DB.Update(func(txn *badger.Txn) error {
 		return txn.Set([]byte(key), []byte(value))
 	})
-
+	if err != nil {
+		logrus.Fatal("badgerDB set error, ", err)
+	}
+	return nil
 }
 func (bDB *BadgerDBStore) Get(key string) (string, error) {
 	result := ""
@@ -58,29 +61,43 @@ func (bDB *BadgerDBStore) Incr(key string) (string, error) {
 	err := bDB.DB.Update(func(txn *badger.Txn) error {
 		item, err := txn.Get([]byte(key))
 		if err != nil {
-			return err
+			logrus.Fatal("badgerDB incr get error, ", err)
 		}
 		var resultInt64 int64
 		item.Value(func(val []byte) error {
 			resultInt64, err = strconv.ParseInt(string(val), 10, 64)
 			if err != nil {
-				return err
+				logrus.Fatal("badgerDB incr get value error, ", err)
 			}
 			return nil
 		})
 		resultInt64 = resultInt64 + 1
 
 		result = fmt.Sprintf("%d", resultInt64)
-		return txn.Set([]byte(key), []byte(result))
+		err = txn.Set([]byte(key), []byte(result))
+		if err != nil {
+			logrus.Fatal("badgerDB incr set value error, ", err)
+		}
+		return nil
 	})
+
 	return result, err
 }
 func (bDB *BadgerDBStore) Del(key string) error {
-	return bDB.DB.Update(func(txn *badger.Txn) error {
+	err := bDB.DB.Update(func(txn *badger.Txn) error {
 		err := txn.Delete([]byte(key))
 		return err
 	})
+	if err != nil {
+		logrus.Fatal("badgerDB delete error, ", err)
+	}
+	return nil
 }
+
+func (bDB *BadgerDBStore) Keys(prefix string) ([]string, error) {
+
+}
+
 func (bDB *BadgerDBStore) Snapshot() ([]byte, error) {
 	return nil, nil
 }

@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-13 18:05:16
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-30 22:35:09
+ * @LastEditTime: 2021-12-02 21:48:53
  */
 package store
 
@@ -20,14 +20,13 @@ type AlfheimdbStore interface {
 	Get(key string) (string, error)
 	Incr(key string) (string, error)
 	Del(key string) error
+	Keys(prefix string) ([]string, error)
 	Snapshot() ([]byte, error)
 	LoadSnapshot(data []byte) error
 }
 
 func Init() {
 	switch config.Config.StoreEngine {
-	case "syncmap":
-		ADBStore = NewSyncMemStoreDatabase()
 	case "map":
 		ADBStore = NewMemStoreDatabase()
 	case "badger":

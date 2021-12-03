@@ -1,10 +1,10 @@
 /*
- * @Descripttion:
+ * @Descripttion:Config
  * @version:
  * @Author: cm.d
  * @Date: 2021-10-16 17:50:03
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-30 22:51:30
+ * @LastEditTime: 2021-12-02 21:30:03
  */
 package config
 
@@ -30,7 +30,7 @@ type GTConfig struct {
 	RaftMaxAppendEntris  int    `default:"1000"`
 	RaftTrailingLogs     uint64 `default:"1024000"`
 	LogType              string `default:"stdout"`
-	StoreEngine          string `default:"syncmap"`
+	StoreEngine          string `default:"map"`
 	WALEngine            string `default:"badger"`
 	IsBigEndian          bool   `default:"true"`
 	BaseDir              string

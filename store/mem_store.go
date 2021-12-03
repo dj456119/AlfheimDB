@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-13 18:43:19
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-30 21:01:52
+ * @LastEditTime: 2021-12-02 22:48:28
  */
 
 package store
@@ -12,6 +12,7 @@ package store
 import (
 	"encoding/json"
 	"strconv"
+	"strings"
 	"sync"
 )
 
@@ -79,4 +80,16 @@ func (memStore *MemStoreDatabase) LoadSnapshot(data []byte) error {
 	err := json.Unmarshal(data, &stringstore)
 	memStore.RWMutex.Unlock()
 	return err
+}
+
+func (memStore *MemStoreDatabase) Keys(prefix string) ([]string, error) {
+	memStore.RWMutex.RLock()
+	defer memStore.RWMutex.RUnlock()
+	result := []string{}
+	for k, v := range memStore.StringStore {
+		if strings.HasPrefix(k, prefix) {
+			result = append(result, v)
+		}
+	}
+	return result, nil
 }
