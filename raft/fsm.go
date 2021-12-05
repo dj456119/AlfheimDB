@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-11 11:19:46
  * @LastEditors: cm.d
- * @LastEditTime: 2021-12-02 21:35:02
+ * @LastEditTime: 2021-12-04 23:41:16
  */
 
 package raft
@@ -13,6 +13,7 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
+	"strconv"
 	"strings"
 
 	"github.com/AlfheimDB/store"
@@ -23,7 +24,7 @@ import (
 
 //Fsm apply response struct
 type FsmResponse struct {
-	Data  string
+	Data  interface{}
 	Error error
 }
 
@@ -59,6 +60,16 @@ func (aFsm *AlfheimRaftFSMImpl) Apply(l *raft.Log) interface{} {
 	case "incr":
 		result, err := store.ADBStore.Incr(string(cmd.Args[1]))
 		return FsmResponse{Data: result, Error: err}
+	case "setnx":
+		result, err := store.ADBStore.SetNx(string(cmd.Args[1]), string(cmd.Args[2]))
+		return FsmResponse{Data: result, Error: err}
+	case "ttl":
+		result, err := store.ADBStore.TTL(string(cmd.Args[1]))
+		return FsmResponse{Data: result, Error: err}
+	case "setex":
+		timeout, _ := strconv.ParseInt(string(cmd.Args[3]), 10, 64)
+		err := store.ADBStore.SetEx(string(cmd.Args[0]), string(cmd.Args[2]), timeout)
+		return FsmResponse{Error: err}
 	default:
 		return FsmResponse{Error: errors.New("Unknow command, " + cmdLow)}
 	}

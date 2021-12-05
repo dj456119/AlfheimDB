@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-13 18:43:19
  * @LastEditors: cm.d
- * @LastEditTime: 2021-12-02 22:48:28
+ * @LastEditTime: 2021-12-04 14:37:30
  */
 
 package store
@@ -85,6 +85,9 @@ func (memStore *MemStoreDatabase) LoadSnapshot(data []byte) error {
 func (memStore *MemStoreDatabase) Keys(prefix string) ([]string, error) {
 	memStore.RWMutex.RLock()
 	defer memStore.RWMutex.RUnlock()
+	if prefix == "*" {
+		prefix = ""
+	}
 	result := []string{}
 	for k, v := range memStore.StringStore {
 		if strings.HasPrefix(k, prefix) {
@@ -92,4 +95,18 @@ func (memStore *MemStoreDatabase) Keys(prefix string) ([]string, error) {
 		}
 	}
 	return result, nil
+}
+
+func (memStore *MemStoreDatabase) SetEx(key string, value string, timeout int64) error {
+	//TO DO
+	return nil
+}
+func (memStore *MemStoreDatabase) TTL(key string) (string, error) {
+	//TO DO
+	return "", nil
+}
+
+func (memStore *MemStoreDatabase) SetNx(key string, value string) (int, error) {
+	//TO DO
+	return 0, nil
 }

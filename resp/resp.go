@@ -4,12 +4,13 @@
  * @Author: cm.d
  * @Date: 2021-11-13 01:06:51
  * @LastEditors: cm.d
- * @LastEditTime: 2021-12-02 22:47:16
+ * @LastEditTime: 2021-12-04 23:46:25
  */
 package resp
 
 import (
 	"errors"
+	"strconv"
 	"strings"
 	"time"
 
@@ -52,18 +53,32 @@ func CommandExec(conn redcon.Conn, cmd redcon.Command) {
 		})
 		conn.Close()
 	case "test":
-		execCommandByFsm(1, conn, cmd, RESP_TEST_TIMEOUT)
+		execCommandByFsm(1, nil, conn, cmd, RESP_TEST_TIMEOUT)
 	case "incr":
-		execCommandByFsm(2, conn, cmd, RESP_INCR_TIMEOUT)
+		execCommandByFsm(2, nil, conn, cmd, RESP_INCR_TIMEOUT)
 	case "set":
-		execCommandByFsm(3, conn, cmd, RESP_SET_TIMEOUT)
+		execCommandByFsm(3, nil, conn, cmd, RESP_SET_TIMEOUT)
+	case "setex":
+		execCommandByFsm(4, func(cmd redcon.Command) error {
+			_, err := strconv.ParseInt(string(cmd.Args[3]), 10, 64)
+			return err
+		}, conn, cmd, RESP_SET_TIMEOUT)
+	case "setnx":
+		execCommandByFsm(3, nil, conn, cmd, RESP_SET_TIMEOUT)
+	case "ttl":
+		execCommandByFsm(1, nil, conn, cmd, RESP_GET_TIMEOUT)
+	case "keys":
+		execCommand(2, conn, cmd, func(cmd redcon.Command) raft.FsmResponse {
+			result, err := store.ADBStore.Keys(string(cmd.Args[1]))
+			return raft.FsmResponse{Data: result, Error: err}
+		})
 	case "get":
 		execCommand(2, conn, cmd, func(cmd redcon.Command) raft.FsmResponse {
 			data, err := store.ADBStore.Get(string(cmd.Args[1]))
 			return raft.FsmResponse{Data: data, Error: err}
 		})
 	case "del":
-		execCommandByFsm(2, conn, cmd, RESP_GET_TIMEOUT)
+		execCommandByFsm(2, nil, conn, cmd, RESP_GET_TIMEOUT)
 	}
 }
 
@@ -90,11 +105,19 @@ func execCommand(argsLength int, conn redcon.Conn, cmd redcon.Command, exec func
 	conn.WriteAny(response.Data)
 }
 
-func execCommandByFsm(argsLength int, conn redcon.Conn, cmd redcon.Command, timeout time.Duration) {
+func execCommandByFsm(argsLength int, validArgs func(cmd redcon.Command) error, conn redcon.Conn, cmd redcon.Command, timeout time.Duration) {
 	if len(cmd.Args) < argsLength {
 		conn.WriteError("ERR wrong number of arguments for '" + string(cmd.Args[0]) + "' command")
 		return
 	}
+	if validArgs != nil {
+		err := validArgs(cmd)
+		if err != nil {
+			conn.WriteError(err.Error())
+			return
+		}
+	}
+
 	future := raft.RaftServer.Raft.Apply(cmd.Raw, timeout)
 	err := future.Error()
 	if err != nil {

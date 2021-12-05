@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-11 23:33:20
  * @LastEditors: cm.d
- * @LastEditTime: 2021-12-01 18:11:03
+ * @LastEditTime: 2021-12-04 13:36:09
  */
 package httpserver
 
@@ -40,7 +40,7 @@ func TestServer(w http.ResponseWriter, req *http.Request) {
 			w.Write([]byte(resp.Error.Error()))
 			return
 		}
-		w.Write([]byte(resp.Data))
+		w.Write([]byte(resp.Data.(string)))
 	}
 }
 
