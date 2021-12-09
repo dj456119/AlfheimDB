@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-06 18:48:23
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-30 21:13:09
+ * @LastEditTime: 2021-12-09 18:11:57
  */
 
 package main
@@ -21,13 +21,24 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//module init
+//Module init
 func init() {
+	//Init config module
 	config.Init()
+
+	//Init log module
 	log.Init()
+
+	//Init store module
 	store.Init()
+
+	//Init redcon server
 	go resp.Init()
+
+	//Init raft server
 	go raft.Init()
+
+	//Init test http server
 	go httpserver.Init()
 }
 

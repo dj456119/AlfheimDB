@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-11 18:00:19
  * @LastEditors: cm.d
- * @LastEditTime: 2021-12-02 21:30:38
+ * @LastEditTime: 2021-12-09 17:56:45
  */
 
 package raft
@@ -28,6 +28,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+//Alfheim raft server
 type AlfheimRaftServer struct {
 	RaftId  string
 	MyIP    string
@@ -134,6 +135,7 @@ func shell(command string) {
 	logrus.Info("stderr: ", stderr.String())
 }
 
+//Bootstrap, only run at first startup
 func (aServer *AlfheimRaftServer) Bootstrap() {
 	servers := aServer.Raft.GetConfiguration().Configuration().Servers
 	if len(servers) > 0 {

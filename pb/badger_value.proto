@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package pb;
+
+
+option go_package = "./;pb";
+
+message BadgerStringValue {
+    string Value = 1;
+    int64 TimeStamp = 2;
+    int64 Timeout = 3;
+}

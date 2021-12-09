@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package pb;
+
+
+option go_package = "./;pb";
+
+message FsmLog {
+    string Cmd = 1;
+    repeated bytes CmdArgs = 2;
+    int64 TimeStamp = 3;
+}

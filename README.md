@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-12 09:51:16
  * @LastEditors: cm.d
- * @LastEditTime: 2021-11-22 13:09:50
+ * @LastEditTime: 2021-12-09 18:30:40
 -->
 
 # AlfheimDB
@@ -60,6 +60,11 @@ String
 + Get
 + Incr
 + Del
++ SetNx
++ SetEx
++ Expire
++ TTL
++ Keys
 
 # Benchmarks
 
