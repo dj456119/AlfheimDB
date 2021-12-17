@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-30 22:08:26
  * @LastEditors: cm.d
- * @LastEditTime: 2021-12-09 18:25:18
+ * @LastEditTime: 2021-12-17 14:38:06
  */
 package store
 
@@ -24,15 +24,15 @@ type BadgerDBStore struct {
 	DB *badger.DB
 }
 
-type BadgerDBStringValue struct {
-	Value     string
+type BadgerDBValue struct {
+	Value     []byte
 	TimeStamp int64
 	Timeout   int64
 	buff      []byte
 }
 
-func NewBadgerDBStringValue(value string, timeStamp, timeout int64) (*BadgerDBStringValue, error) {
-	bdsv := BadgerDBStringValue{
+func NewBadgerDBValue(value []byte, timeStamp, timeout int64) (*BadgerDBValue, error) {
+	bdsv := BadgerDBValue{
 		Value:     value,
 		TimeStamp: timeStamp,
 		Timeout:   timeout,
@@ -44,7 +44,7 @@ func NewBadgerDBStringValue(value string, timeStamp, timeout int64) (*BadgerDBSt
 	return &bdsv, nil
 }
 
-func (bdsv *BadgerDBStringValue) Encode() error {
+func (bdsv *BadgerDBValue) Encode() error {
 	pbBdsv := pb.BadgerStringValue{
 		Value:     bdsv.Value,
 		TimeStamp: int64(bdsv.TimeStamp),
@@ -55,7 +55,7 @@ func (bdsv *BadgerDBStringValue) Encode() error {
 	return err
 }
 
-func (bdsv *BadgerDBStringValue) Decode(buff []byte) error {
+func (bdsv *BadgerDBValue) Decode(buff []byte) error {
 	pbBdsv := pb.BadgerStringValue{}
 	err := proto.Unmarshal(buff, &pbBdsv)
 	if err != nil {
@@ -79,7 +79,7 @@ func NewBadgerDBStore(basedir string) *BadgerDBStore {
 }
 
 func (bDB *BadgerDBStore) Set(key string, value string, nowTime int64) error {
-	stringValue, err := NewBadgerDBStringValue(value, nowTime/1e6, -1)
+	stringValue, err := NewBadgerDBValue([]byte(value), nowTime/1e6, -1)
 	if err != nil {
 		return err
 	}
@@ -92,14 +92,14 @@ func (bDB *BadgerDBStore) Set(key string, value string, nowTime int64) error {
 	return nil
 }
 func (bDB *BadgerDBStore) Get(key string) (*string, error) {
-	var result *BadgerDBStringValue
+	var result *BadgerDBValue
 	err := bDB.DB.View(func(txn *badger.Txn) error {
 		item, err := txn.Get([]byte(key))
 		if err != nil {
 			return err
 		}
 		return item.Value(func(val []byte) error {
-			bdsv := BadgerDBStringValue{}
+			bdsv := BadgerDBValue{}
 			result = &bdsv
 			return bdsv.Decode(val)
 		})
@@ -116,12 +116,13 @@ func (bDB *BadgerDBStore) Get(key string) (*string, error) {
 	if result.Timeout != -1 && time.Now().UnixNano()/1e6 > result.TimeStamp+result.Timeout {
 		return nil, nil
 	}
-	return &result.Value, err
+	resultString := string(result.Value)
+	return &resultString, err
 }
 
 func (bDB *BadgerDBStore) Incr(key string, nowTime int64) (int64, error) {
 	var resultInt64 int64
-	var bdsv *BadgerDBStringValue
+	var bdsv *BadgerDBValue
 	err := bDB.DB.Update(func(txn *badger.Txn) error {
 		item, err := txn.Get([]byte(key))
 		if err != nil {
@@ -133,7 +134,7 @@ func (bDB *BadgerDBStore) Incr(key string, nowTime int64) (int64, error) {
 			}
 		} else {
 			item.Value(func(val []byte) error {
-				bdsv = &BadgerDBStringValue{}
+				bdsv = &BadgerDBValue{}
 				err := bdsv.Decode(val)
 				if err != nil {
 					logrus.Fatal("badgerDB get value error, ", err)
@@ -143,7 +144,7 @@ func (bDB *BadgerDBStore) Incr(key string, nowTime int64) (int64, error) {
 					return nil
 				}
 
-				resultInt64, err = strconv.ParseInt(bdsv.Value, 10, 64)
+				resultInt64, err = strconv.ParseInt(string(bdsv.Value), 10, 64)
 				if err != nil {
 					logrus.Fatal("badgerDB incr get value error, ", err)
 				}
@@ -154,12 +155,12 @@ func (bDB *BadgerDBStore) Incr(key string, nowTime int64) (int64, error) {
 		resultInt64 = resultInt64 + 1
 		result := fmt.Sprintf("%d", resultInt64)
 		if bdsv == nil {
-			bdsv, err = NewBadgerDBStringValue(result, nowTime/1e6, -1)
+			bdsv, err = NewBadgerDBValue([]byte(result), nowTime/1e6, -1)
 			if err != nil {
 				logrus.Fatal("Incr unknow err, ", err)
 			}
 		} else {
-			bdsv.Value = result
+			bdsv.Value = []byte(result)
 			err = bdsv.Encode()
 			if err != nil {
 				logrus.Fatal("Incr unknow err, ", err)
@@ -217,7 +218,7 @@ func (bDB *BadgerDBStore) Keys(prefix string) ([]string, error) {
 }
 
 func (bDB *BadgerDBStore) SetEx(key string, value string, nowTime, timeout int64) (string, error) {
-	stringValue, err := NewBadgerDBStringValue(value, nowTime/1e6, timeout)
+	stringValue, err := NewBadgerDBValue([]byte(value), nowTime/1e6, timeout)
 	if err != nil {
 		return "", err
 	}
@@ -231,14 +232,14 @@ func (bDB *BadgerDBStore) SetEx(key string, value string, nowTime, timeout int64
 }
 
 func (bDB *BadgerDBStore) TTL(key string) (int64, error) {
-	var result *BadgerDBStringValue
+	var result *BadgerDBValue
 	err := bDB.DB.View(func(txn *badger.Txn) error {
 		item, err := txn.Get([]byte(key))
 		if err != nil {
 			return err
 		}
 		return item.Value(func(val []byte) error {
-			bdsv := BadgerDBStringValue{}
+			bdsv := BadgerDBValue{}
 			result = &bdsv
 			return bdsv.Decode(val)
 		})
@@ -263,7 +264,7 @@ func (bDB *BadgerDBStore) TTL(key string) (int64, error) {
 
 func (bDB *BadgerDBStore) SetNx(key string, value string, nowTime int64) (int, error) {
 	result := 0
-	stringValue, err := NewBadgerDBStringValue(value, nowTime/1e6, -1)
+	stringValue, err := NewBadgerDBValue([]byte(value), nowTime/1e6, -1)
 	if err != nil {
 		return 0, err
 	}
@@ -298,9 +299,9 @@ func (bDB *BadgerDBStore) Expire(key string, nowTime, timeout int64) (int, error
 				logrus.Fatal("badgerDB incr get error, ", err)
 			}
 		} else {
-			var bdsv *BadgerDBStringValue
+			var bdsv *BadgerDBValue
 			err := item.Value(func(val []byte) error {
-				bdsv = &BadgerDBStringValue{}
+				bdsv = &BadgerDBValue{}
 				return bdsv.Decode(val)
 			})
 			if err != nil {

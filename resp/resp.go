@@ -4,7 +4,7 @@
  * @Author: cm.d
  * @Date: 2021-11-13 01:06:51
  * @LastEditors: cm.d
- * @LastEditTime: 2021-12-09 17:59:50
+ * @LastEditTime: 2021-12-17 14:16:29
  */
 package resp
 
@@ -96,6 +96,7 @@ func Close(conn redcon.Conn, err error) {
 	logrus.Debug("Close client, address: ", conn.NetConn().RemoteAddr())
 }
 
+//Exec command
 func execCommand(argsLength int, conn redcon.Conn, cmd redcon.Command, exec func(cmd redcon.Command) raft.FsmResponse) {
 	if len(cmd.Args) < argsLength {
 		conn.WriteError("ERR wrong number of arguments for '" + string(cmd.Args[0]) + "' command")
@@ -105,6 +106,7 @@ func execCommand(argsLength int, conn redcon.Conn, cmd redcon.Command, exec func
 	WriteResponse(response, conn)
 }
 
+//Exec command by fsm
 func execCommandByFsm(argsLength int, validArgs func(cmd redcon.Command) error, conn redcon.Conn, cmd redcon.Command, timeout time.Duration) {
 	if len(cmd.Args) < argsLength {
 		conn.WriteError("ERR wrong number of arguments for '" + string(cmd.Args[0]) + "' command")
